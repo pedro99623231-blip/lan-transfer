@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>LANTransfer</AssemblyName>
+    <RootNamespace>WiFiTransfer</RootNamespace>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <Version>5.0.0</Version>
+    <Product>LAN Transfer</Product>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <SatelliteResourceLanguages>pt-BR;en</SatelliteResourceLanguages>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="WPF-UI" Version="3.0.5" />
+    <PackageReference Include="QRCoder" Version="1.6.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="app.ico" />
+    <EmbeddedResource Include="web\index.html" LogicalName="index.html" />
+    <EmbeddedResource Include="web\pin.html" LogicalName="pin.html" />
+  </ItemGroup>
+</Project>

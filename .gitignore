@@ -1,0 +1,20 @@
+# Android
+android/build/
+android/app/build/
+android/.gradle/
+android/.kotlin/
+android/local.properties
+android/output/
+*.jks
+*.keystore
+# Windows
+windows/WiFiTransfer/bin/
+windows/WiFiTransfer/obj/
+windows/publish/
+windows/output/
+windows/_obsolete/
+# Geral
+.vs/
+.idea/
+*.user
+__pycache__/

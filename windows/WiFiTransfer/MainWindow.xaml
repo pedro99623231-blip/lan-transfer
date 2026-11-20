@@ -1,0 +1,531 @@
+<ui:FluentWindow x:Class="WiFiTransfer.MainWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 Title="LAN Transfer" Width="1180" Height="760" MinWidth="900" MinHeight="580"
+                 WindowStartupLocation="CenterScreen"
+                 ExtendsContentIntoTitleBar="True"
+                 WindowBackdropType="Mica"
+                 WindowCornerPreference="Round"
+                 AllowDrop="True" Drop="OnDrop" DragOver="OnDragOver"
+                 Loaded="OnLoaded" Closing="OnClosing">
+  <ui:FluentWindow.Resources>
+    <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    <Style x:Key="Muted" TargetType="TextBlock">
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style x:Key="Header" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="18" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+    </Style>
+    <Style x:Key="Label" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="Row" TargetType="Border">
+      <Setter Property="Padding" Value="10,6" />
+      <Setter Property="Margin" Value="0,0,0,4" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+    </Style>
+    <Style x:Key="Overlay" TargetType="Grid">
+      <Setter Property="Visibility" Value="Collapsed" />
+      <Setter Property="Background" Value="#99000000" />
+      <Setter Property="Grid.Row" Value="0" />
+      <Setter Property="Grid.RowSpan" Value="2" />
+    </Style>
+    <!-- miniatura ou ícone -->
+    <DataTemplate x:Key="ThumbOrIcon">
+      <Grid Width="40" Height="40" Margin="0,0,12,0">
+        <ui:SymbolIcon Symbol="Document24" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        <Border CornerRadius="6" ClipToBounds="True" Visibility="{Binding ShowThumb, Converter={StaticResource BoolToVis}}">
+          <Border.Background>
+            <ImageBrush ImageSource="{Binding Thumb}" Stretch="UniformToFill" />
+          </Border.Background>
+        </Border>
+      </Grid>
+    </DataTemplate>
+  </ui:FluentWindow.Resources>
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <ui:TitleBar Grid.Row="0" Title="LAN Transfer">
+      <ui:TitleBar.Icon>
+        <ui:ImageIcon Source="pack://application:,,,/app.ico" />
+      </ui:TitleBar.Icon>
+    </ui:TitleBar>
+
+    <Grid Grid.Row="1" Margin="20,8,20,20">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="420" />
+        <ColumnDefinition Width="20" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+
+      <!-- ===================== Meus arquivos ===================== -->
+      <ui:Card Grid.Column="0" Padding="20" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
+        <DockPanel>
+          <StackPanel DockPanel.Dock="Top">
+            <DockPanel>
+              <ui:ToggleSwitch x:Name="SharingSwitch" DockPanel.Dock="Right" Content="Visível" Checked="OnSharingChanged" Unchecked="OnSharingChanged" />
+              <TextBlock Text="Meus arquivos" Style="{StaticResource Header}" />
+            </DockPanel>
+            <TextBlock x:Name="SharingHint" Margin="0,4,0,12" TextWrapping="Wrap" Style="{StaticResource Muted}"
+                       Text="Qualquer aparelho com o LAN Transfer na rede vê e baixa estes arquivos. Eles são enviados de onde estão, sem cópia." />
+            <WrapPanel Margin="0,0,0,8">
+              <ui:Button Content="Arquivos" Appearance="Primary" Icon="{ui:SymbolIcon Add24}" Click="OnAddFiles" Margin="0,0,8,6"
+                         ToolTip="Disponibilizar arquivos na rede" />
+              <ui:Button Content="Pasta" Icon="{ui:SymbolIcon FolderAdd24}" Click="OnAddFolder" Margin="0,0,8,6"
+                         ToolTip="Disponibilizar uma pasta inteira, com as subpastas" />
+              <ui:Button Content="QR code" Icon="{ui:SymbolIcon QrCode24}" Click="OnShowQr" Margin="0,0,8,6"
+                         ToolTip="Para quem não tem o app: lê o código com a câmera e usa pelo navegador" />
+              <ui:Button Icon="{ui:SymbolIcon Delete24}" Click="OnClearShared" Margin="0,0,8,6" ToolTip="Remover todos da lista" />
+              <ui:Button Icon="{ui:SymbolIcon Settings24}" Click="OnShowSettings" Margin="0,0,0,6" ToolTip="Configurações" />
+            </WrapPanel>
+            <StackPanel x:Name="PinBadge" Orientation="Horizontal" Margin="0,0,0,8" Visibility="Collapsed">
+              <ui:SymbolIcon Symbol="LockClosed16" FontSize="14" Margin="0,0,6,0" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+              <TextBlock x:Name="PinBadgeText" Style="{StaticResource Muted}" VerticalAlignment="Center" />
+            </StackPanel>
+          </StackPanel>
+
+          <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+            <Separator Margin="0,0,0,10" />
+            <StackPanel Orientation="Horizontal">
+              <ui:SymbolIcon Symbol="Desktop24" FontSize="16" Margin="0,0,8,0" />
+              <TextBlock x:Name="MeText" Foreground="{DynamicResource TextFillColorPrimaryBrush}" VerticalAlignment="Center" />
+            </StackPanel>
+            <TextBlock x:Name="FolderText" Margin="0,6,0,6" TextWrapping="Wrap" Style="{StaticResource Muted}" />
+            <StackPanel Orientation="Horizontal">
+              <ui:Button Content="Abrir recebidos" Icon="{ui:SymbolIcon FolderOpen24}" Click="OnOpenFolder" />
+              <ui:Button Content="Mudar pasta" Icon="{ui:SymbolIcon Folder24}" Margin="8,0,0,0" Click="OnChangeFolder" />
+            </StackPanel>
+          </StackPanel>
+
+          <Grid>
+            <Border x:Name="SharedEmpty" BorderThickness="2" CornerRadius="10" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+              <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="16">
+                <ui:SymbolIcon Symbol="ArrowUpload24" FontSize="34" HorizontalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="Arraste arquivos ou pastas para cá" Margin="0,8,0,0" HorizontalAlignment="Center"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="ou clique com o botão direito no Explorer &gt; Disponibilizar no LAN Transfer" Margin="0,4,0,0"
+                           HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center" Style="{StaticResource Muted}" />
+              </StackPanel>
+            </Border>
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+              <ItemsControl x:Name="SharedList" VirtualizingPanel.IsVirtualizing="True">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Border Style="{StaticResource Row}" Visibility="{Binding Visible, Converter={StaticResource BoolToVis}}">
+                      <DockPanel>
+                        <ui:Button DockPanel.Dock="Right" Appearance="Transparent" Icon="{ui:SymbolIcon Dismiss20}"
+                                   ToolTip="Parar de compartilhar (não apaga o arquivo)" Tag="{Binding}" Click="OnRemoveShared" />
+                        <ContentPresenter DockPanel.Dock="Left" Content="{Binding}" ContentTemplate="{StaticResource ThumbOrIcon}" />
+                        <StackPanel VerticalAlignment="Center">
+                          <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Path}"
+                                     Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                          <TextBlock Text="{Binding Status}" Style="{StaticResource Muted}" TextTrimming="CharacterEllipsis" />
+                          <ProgressBar Value="{Binding Progress}" Maximum="100" Height="4" Margin="0,4,0,0"
+                                       Visibility="{Binding Busy, Converter={StaticResource BoolToVis}}" />
+                        </StackPanel>
+                      </DockPanel>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </ScrollViewer>
+          </Grid>
+        </DockPanel>
+      </ui:Card>
+
+      <Grid Grid.Column="2">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="*" />
+          <RowDefinition Height="16" />
+          <RowDefinition Height="230" />
+        </Grid.RowDefinitions>
+
+        <!-- ===================== Na rede ===================== -->
+        <ui:Card Grid.Row="0" Padding="20" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
+          <DockPanel>
+            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
+              <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <ui:ProgressRing x:Name="SearchRing" IsIndeterminate="True" Width="18" Height="18" Margin="0,0,10,0" Visibility="Collapsed" />
+                <ui:Button Content="Procurar" Icon="{ui:SymbolIcon ArrowSync24}" Margin="0,0,8,0" Click="OnSearch" />
+                <ui:Button x:Name="DownloadSelectedButton" Content="Baixar selecionados" Appearance="Primary"
+                           Icon="{ui:SymbolIcon ArrowDownload24}" IsEnabled="False" Click="OnDownloadSelected" />
+              </StackPanel>
+              <StackPanel>
+                <TextBlock Text="Disponíveis na rede" Style="{StaticResource Header}" />
+                <TextBlock Text="Arquivos de outros aparelhos com o app. Você também pode enviar direto para eles." Style="{StaticResource Muted}" />
+              </StackPanel>
+            </DockPanel>
+            <ui:TextBox x:Name="SearchBox" DockPanel.Dock="Top" Margin="0,0,0,10" PlaceholderText="Buscar arquivos (aqui e nos outros aparelhos)…"
+                        Icon="{ui:SymbolIcon Search24}" TextChanged="OnSearchTextChanged" />
+            <Grid>
+              <StackPanel x:Name="PeersEmpty" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <ui:SymbolIcon Symbol="WifiWarning24" FontSize="34" HorizontalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="Procurando aparelhos na rede…" Margin="0,8,0,0" HorizontalAlignment="Center"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="Abra o LAN Transfer no celular ou em outro PC." HorizontalAlignment="Center" Style="{StaticResource Muted}" />
+              </StackPanel>
+              <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl x:Name="PeersList">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <StackPanel Margin="0,0,0,14" AllowDrop="True" Drop="OnDropOnPeer" DragOver="OnDragOver" Tag="{Binding}" Background="Transparent">
+                        <DockPanel Margin="0,0,0,6">
+                          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <ui:Button Content="Digitar PIN" Icon="{ui:SymbolIcon LockClosed20}" Appearance="Primary" Margin="0,0,6,0"
+                                       Tag="{Binding}" Click="OnEnterPin" Visibility="{Binding NeedsPin, Converter={StaticResource BoolToVis}}" />
+                            <ui:Button Content="Enviar" Icon="{ui:SymbolIcon Send20}" Appearance="Secondary" Margin="0,0,6,0"
+                                       Tag="{Binding}" Click="OnSendMenu" ToolTip="Enviar arquivos, pasta ou texto direto para este aparelho. Você também pode arrastar arquivos para cá." />
+                            <ui:Button Content="Todos" Appearance="Transparent" Tag="{Binding}" Click="OnSelectAllPeer"
+                                       Visibility="{Binding HasFiles, Converter={StaticResource BoolToVis}}" />
+                          </StackPanel>
+                          <ui:SymbolIcon DockPanel.Dock="Left" Symbol="{Binding Icon}" FontSize="22" Margin="0,0,10,0"
+                                         Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                          <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                            <TextBlock Text="{Binding Subtitle}" Style="{StaticResource Muted}" />
+                          </StackPanel>
+                        </DockPanel>
+                        <ItemsControl ItemsSource="{Binding Files}">
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                              <Border Style="{StaticResource Row}" Visibility="{Binding Visible, Converter={StaticResource BoolToVis}}">
+                                <DockPanel>
+                                  <ui:Button DockPanel.Dock="Right" Appearance="Transparent" Icon="{ui:SymbolIcon ArrowDownload20}"
+                                             ToolTip="Baixar" Tag="{Binding}" Click="OnDownloadOne" />
+                                  <ui:Button DockPanel.Dock="Right" Appearance="Transparent" Icon="{ui:SymbolIcon Eye20}"
+                                             ToolTip="Ver sem baixar" Tag="{Binding}" Click="OnPreview"
+                                             Visibility="{Binding CanPreview, Converter={StaticResource BoolToVis}}" />
+                                  <CheckBox DockPanel.Dock="Left" IsChecked="{Binding Selected}" Click="OnSelectionChanged" VerticalAlignment="Center" />
+                                  <ContentPresenter DockPanel.Dock="Left" Content="{Binding}" ContentTemplate="{StaticResource ThumbOrIcon}" />
+                                  <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                    <TextBlock Text="{Binding SizeText}" Style="{StaticResource Muted}" TextTrimming="CharacterEllipsis" />
+                                  </StackPanel>
+                                </DockPanel>
+                              </Border>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="Nenhum arquivo disponível neste aparelho." Margin="32,0,0,0" Style="{StaticResource Muted}"
+                                   Visibility="{Binding ShowEmpty, Converter={StaticResource BoolToVis}}" />
+                      </StackPanel>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </ScrollViewer>
+            </Grid>
+          </DockPanel>
+        </ui:Card>
+
+        <!-- ===================== Transferências ===================== -->
+        <ui:Card Grid.Row="2" Padding="20" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
+          <DockPanel>
+            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+              <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <ui:Button Content="Histórico" Icon="{ui:SymbolIcon History20}" Appearance="Transparent" Click="OnShowHistory" />
+                <ui:Button Content="Limpar lista" Appearance="Transparent" Click="OnClearDownloads" />
+              </StackPanel>
+              <TextBlock Text="Transferências" Style="{StaticResource Header}" />
+            </DockPanel>
+            <Grid>
+              <TextBlock x:Name="DownloadsEmpty" Text="Os arquivos que você baixar, receber ou enviar aparecem aqui." HorizontalAlignment="Center"
+                         VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+              <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ItemsControl x:Name="DownloadsList">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Border Style="{StaticResource Row}">
+                        <DockPanel>
+                          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <ui:Button Appearance="Transparent" Icon="{ui:SymbolIcon Pause20}" ToolTip="Pausar" Tag="{Binding}" Click="OnPauseTransfer"
+                                       Visibility="{Binding CanPause, Converter={StaticResource BoolToVis}}" />
+                            <ui:Button Appearance="Transparent" Icon="{ui:SymbolIcon Play20}" ToolTip="Continuar de onde parou" Tag="{Binding}" Click="OnResumeTransfer"
+                                       Visibility="{Binding CanResume, Converter={StaticResource BoolToVis}}" />
+                            <ui:Button Appearance="Transparent" Icon="{ui:SymbolIcon Dismiss20}" ToolTip="Cancelar" Tag="{Binding}" Click="OnCancelTransfer"
+                                       Visibility="{Binding CanCancel, Converter={StaticResource BoolToVis}}" />
+                            <ui:Button Appearance="Transparent" Icon="{ui:SymbolIcon Open20}" ToolTip="Abrir / copiar" Tag="{Binding}" Click="OnOpenDownload"
+                                       Visibility="{Binding CanOpen, Converter={StaticResource BoolToVis}}" />
+                            <ui:Button Appearance="Transparent" Icon="{ui:SymbolIcon FolderOpen20}" ToolTip="Mostrar na pasta" Tag="{Binding}" Click="OnShowDownload"
+                                       Visibility="{Binding CanOpen, Converter={StaticResource BoolToVis}}" />
+                          </StackPanel>
+                          <ui:SymbolIcon DockPanel.Dock="Left" Symbol="{Binding Icon}" FontSize="22" Margin="0,0,12,0" />
+                          <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                            <TextBlock Text="{Binding Status}" Style="{StaticResource Muted}" TextTrimming="CharacterEllipsis" />
+                            <ProgressBar Value="{Binding Progress}" Maximum="100" Height="4" Margin="0,4,0,0"
+                                         Visibility="{Binding Busy, Converter={StaticResource BoolToVis}}" />
+                          </StackPanel>
+                        </DockPanel>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </ScrollViewer>
+            </Grid>
+          </DockPanel>
+        </ui:Card>
+      </Grid>
+    </Grid>
+
+    <!-- ===================== QR code para quem não tem o app ===================== -->
+    <Grid x:Name="QrOverlay" Style="{StaticResource Overlay}" MouseLeftButtonDown="OnHideQr">
+      <ui:Card HorizontalAlignment="Center" VerticalAlignment="Center" Padding="28" Width="440" MouseLeftButtonDown="OnCardClick">
+        <StackPanel>
+          <TextBlock Text="Usar sem instalar o app" Style="{StaticResource Header}" HorizontalAlignment="Center" />
+          <TextBlock Margin="0,6,0,16" TextWrapping="Wrap" TextAlignment="Center" Style="{StaticResource Muted}" FontSize="13"
+                     Text="Aponte a câmera do celular para o código. Abre uma página no navegador para baixar os arquivos de &quot;Meus arquivos&quot; ou enviar arquivos para este PC. O celular precisa estar na mesma rede." />
+          <Border Background="White" CornerRadius="14" Padding="12" HorizontalAlignment="Center">
+            <Image x:Name="QrImage" Width="250" Height="250" RenderOptions.BitmapScalingMode="NearestNeighbor" />
+          </Border>
+          <TextBox x:Name="QrUrl" Margin="0,16,0,0" IsReadOnly="True" HorizontalContentAlignment="Center" />
+          <TextBlock x:Name="QrOther" Margin="0,6,0,0" TextWrapping="Wrap" TextAlignment="Center" Style="{StaticResource Muted}" />
+          <TextBlock Margin="0,6,0,0" TextWrapping="Wrap" TextAlignment="Center" Style="{StaticResource Muted}"
+                     Text="Se o Chrome não abrir a página, use outro navegador (ex.: Samsung Internet)." />
+          <ui:Button Content="Fechar" Appearance="Primary" HorizontalAlignment="Center" Margin="0,16,0,0" Click="OnHideQr" />
+        </StackPanel>
+      </ui:Card>
+    </Grid>
+
+    <!-- ===================== Pedido de envio (aceitar/recusar) ===================== -->
+    <Grid x:Name="OfferOverlay" Style="{StaticResource Overlay}">
+      <ui:Card HorizontalAlignment="Center" VerticalAlignment="Center" Padding="28" Width="480">
+        <StackPanel>
+          <ui:SymbolIcon Symbol="ArrowDownload24" FontSize="36" HorizontalAlignment="Center" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+          <TextBlock x:Name="OfferTitle" Margin="0,8,0,0" Style="{StaticResource Header}" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center" />
+          <TextBlock x:Name="OfferInfo" Margin="0,4,0,12" Style="{StaticResource Muted}" FontSize="13" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center" />
+          <Border Style="{StaticResource Row}" MaxHeight="200">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+              <TextBlock x:Name="OfferFiles" Foreground="{DynamicResource TextFillColorPrimaryBrush}" TextWrapping="Wrap" />
+            </ScrollViewer>
+          </Border>
+          <CheckBox x:Name="OfferTrust" Margin="0,10,0,0" Content="Confiar neste aparelho" Visibility="Collapsed" />
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0">
+            <ui:Button Content="Recusar" Width="130" Click="OnOfferDecline" />
+            <ui:Button Content="Aceitar" Width="130" Appearance="Primary" Margin="12,0,0,0" Click="OnOfferAccept" />
+          </StackPanel>
+        </StackPanel>
+      </ui:Card>
+    </Grid>
+
+    <!-- ===================== Digitar PIN de outro aparelho ===================== -->
+    <Grid x:Name="PinOverlay" Style="{StaticResource Overlay}" MouseLeftButtonDown="OnHidePin">
+      <ui:Card HorizontalAlignment="Center" VerticalAlignment="Center" Padding="28" Width="400" MouseLeftButtonDown="OnCardClick">
+        <StackPanel>
+          <TextBlock x:Name="PinTitle" Style="{StaticResource Header}" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center" />
+          <TextBlock Margin="0,6,0,14" Style="{StaticResource Muted}" FontSize="13" TextWrapping="Wrap" TextAlignment="Center"
+                     Text="O PIN aparece nas configurações do LAN Transfer do outro aparelho." />
+          <ui:TextBox x:Name="PinBox" FontSize="24" HorizontalContentAlignment="Center" MaxLength="6" PlaceholderText="000000" KeyDown="OnPinKey" />
+          <TextBlock x:Name="PinError" Margin="0,6,0,0" Foreground="#E5484D" HorizontalAlignment="Center" Visibility="Collapsed" Text="PIN incorreto." />
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,16,0,0">
+            <ui:Button Content="Cancelar" Width="120" Click="OnHidePin" />
+            <ui:Button Content="Entrar" Width="120" Appearance="Primary" Margin="12,0,0,0" Click="OnPinOk" />
+          </StackPanel>
+        </StackPanel>
+      </ui:Card>
+    </Grid>
+
+    <!-- ===================== Configurações ===================== -->
+    <Grid x:Name="SettingsOverlay" Style="{StaticResource Overlay}" MouseLeftButtonDown="OnHideSettings">
+      <ui:Card HorizontalAlignment="Center" VerticalAlignment="Center" Padding="28" Width="560" MaxHeight="680" MouseLeftButtonDown="OnCardClick">
+        <DockPanel>
+          <TextBlock DockPanel.Dock="Top" Text="Configurações" Style="{StaticResource Header}" Margin="0,0,0,12" />
+          <ui:Button DockPanel.Dock="Bottom" Content="Fechar" Appearance="Primary" HorizontalAlignment="Right" Margin="0,16,0,0" Click="OnHideSettings" />
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+              <TextBlock Text="SEGURANÇA" Style="{StaticResource Muted}" FontWeight="SemiBold" Margin="0,0,0,6" />
+              <Border Style="{StaticResource Row}" Padding="14,10">
+                <StackPanel>
+                  <DockPanel>
+                    <ui:ToggleSwitch x:Name="PinSwitch" DockPanel.Dock="Right" Click="OnPinSwitch" />
+                    <StackPanel>
+                      <TextBlock Text="Exigir PIN" Style="{StaticResource Label}" />
+                      <TextBlock Text="Quem quiser ver ou baixar seus arquivos precisa digitar o PIN abaixo." Style="{StaticResource Muted}" TextWrapping="Wrap" />
+                    </StackPanel>
+                  </DockPanel>
+                  <StackPanel x:Name="PinPanel" Orientation="Horizontal" Margin="0,10,0,0">
+                    <TextBlock x:Name="PinText" FontSize="28" FontWeight="SemiBold" FontFamily="Consolas" VerticalAlignment="Center"
+                               Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                    <ui:Button Content="Gerar outro" Icon="{ui:SymbolIcon ArrowClockwise20}" Margin="16,0,0,0" Click="OnNewPin" />
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+              <Border Style="{StaticResource Row}" Padding="14,10">
+                <StackPanel>
+                  <DockPanel>
+                    <ui:ToggleSwitch x:Name="TrustedSwitch" DockPanel.Dock="Right" Click="OnTrustedSwitch" />
+                    <StackPanel>
+                      <TextBlock Text="Só aparelhos de confiança" Style="{StaticResource Label}" />
+                      <TextBlock Text="Só os aparelhos marcados abaixo veem seus arquivos e podem enviar para você. Navegadores (QR code) continuam pedindo sua confirmação para enviar e não veem os arquivos."
+                                 Style="{StaticResource Muted}" TextWrapping="Wrap" />
+                    </StackPanel>
+                  </DockPanel>
+                  <TextBlock x:Name="KnownEmpty" Margin="0,8,0,0" Style="{StaticResource Muted}" Text="Nenhum aparelho visto ainda." />
+                  <ItemsControl x:Name="KnownList" Margin="0,6,0,0">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <CheckBox Content="{Binding Name}" IsChecked="{Binding Trusted}" Click="OnTrustChanged" Margin="0,2" />
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
+
+              <Border Style="{StaticResource Row}" Padding="14,10">
+                <StackPanel>
+                  <DockPanel Margin="0,0,0,8">
+                    <ui:ToggleSwitch x:Name="AutoAcceptSwitch" DockPanel.Dock="Right" Click="OnAutoAcceptSwitch" />
+                    <StackPanel>
+                      <TextBlock Text="Aceitar sozinho de aparelhos de confiança" Style="{StaticResource Label}" />
+                      <TextBlock Text="Envios, sincronizações e textos de aparelhos marcados acima entram sem perguntar." Style="{StaticResource Muted}" TextWrapping="Wrap" />
+                    </StackPanel>
+                  </DockPanel>
+                  <DockPanel>
+                    <ui:ToggleSwitch x:Name="EncryptSwitch" DockPanel.Dock="Right" Click="OnEncryptSwitch" />
+                    <StackPanel>
+                      <TextBlock Text="Criptografar entre aparelhos (HTTPS)" Style="{StaticResource Label}" />
+                      <TextBlock Text="Usa conexão criptografada com aparelhos que têm o LAN Transfer 5 ou mais novo. O navegador (QR code) continua sem criptografia."
+                                 Style="{StaticResource Muted}" TextWrapping="Wrap" />
+                    </StackPanel>
+                  </DockPanel>
+                </StackPanel>
+              </Border>
+
+              <TextBlock Text="PASTAS SINCRONIZADAS" Style="{StaticResource Muted}" FontWeight="SemiBold" Margin="0,12,0,6" />
+              <Border Style="{StaticResource Row}" Padding="14,10">
+                <StackPanel>
+                  <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap"
+                             Text="Arquivos novos ou alterados nestas pastas são enviados sozinhos para o aparelho quando ele estiver na rede. Para criar, use Enviar &gt; Sincronizar uma pasta em um aparelho da lista." />
+                  <TextBlock x:Name="SyncEmpty" Margin="0,8,0,0" Style="{StaticResource Muted}" Text="Nenhuma pasta sincronizada." />
+                  <ItemsControl x:Name="SyncList" Margin="0,6,0,0">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <DockPanel Margin="0,2">
+                          <ui:Button DockPanel.Dock="Right" Appearance="Transparent" Icon="{ui:SymbolIcon Delete20}" ToolTip="Parar de sincronizar"
+                                     Tag="{Binding}" Click="OnRemoveSync" />
+                          <StackPanel>
+                            <TextBlock Text="{Binding Title}" Style="{StaticResource Label}" />
+                            <TextBlock Text="{Binding Sub}" Style="{StaticResource Muted}" TextTrimming="CharacterEllipsis" />
+                          </StackPanel>
+                        </DockPanel>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
+
+              <TextBlock Text="APARÊNCIA" Style="{StaticResource Muted}" FontWeight="SemiBold" Margin="0,12,0,6" />
+              <Border Style="{StaticResource Row}" Padding="14,10">
+                <StackPanel>
+                  <DockPanel Margin="0,0,0,8">
+                    <ComboBox x:Name="ThemeBox" DockPanel.Dock="Right" Width="170" SelectionChanged="OnThemeChanged">
+                      <ComboBoxItem Content="Igual ao Windows" Tag="system" />
+                      <ComboBoxItem Content="Claro" Tag="light" />
+                      <ComboBoxItem Content="Escuro" Tag="dark" />
+                    </ComboBox>
+                    <TextBlock Text="Tema" Style="{StaticResource Label}" />
+                  </DockPanel>
+                  <DockPanel>
+                    <ComboBox x:Name="LanguageBox" DockPanel.Dock="Right" Width="170" SelectionChanged="OnLanguageChanged">
+                      <ComboBoxItem Content="Português" Tag="pt" />
+                      <ComboBoxItem Content="English" Tag="en" />
+                    </ComboBox>
+                    <StackPanel>
+                      <TextBlock Text="Idioma" Style="{StaticResource Label}" />
+                      <TextBlock x:Name="LanguageHint" Text="Vale depois de abrir o app de novo." Style="{StaticResource Muted}" />
+                    </StackPanel>
+                  </DockPanel>
+                </StackPanel>
+              </Border>
+
+              <TextBlock Text="WINDOWS" Style="{StaticResource Muted}" FontWeight="SemiBold" Margin="0,12,0,6" />
+              <Border Style="{StaticResource Row}" Padding="14,10">
+                <StackPanel>
+                  <DockPanel Margin="0,0,0,8">
+                    <ui:ToggleSwitch x:Name="StartupSwitch" DockPanel.Dock="Right" Click="OnStartupSwitch" />
+                    <TextBlock Text="Iniciar com o Windows (na bandeja)" Style="{StaticResource Label}" />
+                  </DockPanel>
+                  <DockPanel Margin="0,0,0,8">
+                    <ui:ToggleSwitch x:Name="TraySwitch" DockPanel.Dock="Right" Click="OnTraySwitch" />
+                    <StackPanel>
+                      <TextBlock Text="Fechar para a bandeja" Style="{StaticResource Label}" />
+                      <TextBlock Text="O X esconde a janela e o app continua compartilhando. Para sair, use o ícone perto do relógio." Style="{StaticResource Muted}" TextWrapping="Wrap" />
+                    </StackPanel>
+                  </DockPanel>
+                  <DockPanel>
+                    <ui:ToggleSwitch x:Name="NotifySwitch" DockPanel.Dock="Right" Click="OnNotifySwitch" />
+                    <TextBlock Text="Avisar quando alguém baixar meus arquivos" Style="{StaticResource Label}" />
+                  </DockPanel>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </ScrollViewer>
+        </DockPanel>
+      </ui:Card>
+    </Grid>
+
+    <!-- ===================== Enviar texto ===================== -->
+    <Grid x:Name="TextOverlay" Style="{StaticResource Overlay}" MouseLeftButtonDown="OnHideText">
+      <ui:Card HorizontalAlignment="Center" VerticalAlignment="Center" Padding="28" Width="520" MouseLeftButtonDown="OnCardClick">
+        <StackPanel>
+          <TextBlock x:Name="TextTitle" Style="{StaticResource Header}" />
+          <TextBlock Margin="0,4,0,12" Style="{StaticResource Muted}" TextWrapping="Wrap"
+                     Text="Já vem com o que está na sua área de transferência. No outro aparelho o texto fica pronto para colar." />
+          <TextBox x:Name="TextBoxSend" Height="160" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" />
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+            <ui:Button Content="Cancelar" Width="120" Click="OnHideText" />
+            <ui:Button Content="Enviar" Icon="{ui:SymbolIcon Send20}" Width="120" Appearance="Primary" Margin="12,0,0,0" Click="OnSendText" />
+          </StackPanel>
+        </StackPanel>
+      </ui:Card>
+    </Grid>
+
+    <!-- ===================== Histórico ===================== -->
+    <Grid x:Name="HistoryOverlay" Style="{StaticResource Overlay}" MouseLeftButtonDown="OnHideHistory">
+      <ui:Card HorizontalAlignment="Center" VerticalAlignment="Center" Padding="28" Width="640" Height="600" MouseLeftButtonDown="OnCardClick">
+        <DockPanel>
+          <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+            <ui:Button DockPanel.Dock="Right" Content="Limpar histórico" Appearance="Transparent" Click="OnClearHistory" />
+            <TextBlock Text="Histórico" Style="{StaticResource Header}" />
+          </DockPanel>
+          <ui:Button DockPanel.Dock="Bottom" Content="Fechar" Appearance="Primary" HorizontalAlignment="Right" Margin="0,12,0,0" Click="OnHideHistory" />
+          <Grid>
+            <TextBlock x:Name="HistoryEmpty" Text="Nada por aqui ainda." HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource Muted}" />
+            <ListBox x:Name="HistoryList" BorderThickness="0" Background="Transparent" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     VirtualizingPanel.IsVirtualizing="True">
+              <ListBox.ItemTemplate>
+                <DataTemplate>
+                  <DockPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                      <ui:Button Appearance="Transparent" Icon="{ui:SymbolIcon Open20}" ToolTip="Abrir / copiar" Tag="{Binding}" Click="OnOpenHistory" />
+                      <ui:Button Appearance="Transparent" Icon="{ui:SymbolIcon FolderOpen20}" ToolTip="Mostrar na pasta" Tag="{Binding}" Click="OnShowHistory2" />
+                    </StackPanel>
+                    <ui:SymbolIcon DockPanel.Dock="Left" Symbol="{Binding Icon}" FontSize="20" Margin="0,0,12,0" />
+                    <StackPanel>
+                      <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                      <TextBlock Text="{Binding Sub}" Style="{StaticResource Muted}" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                  </DockPanel>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </Grid>
+        </DockPanel>
+      </ui:Card>
+    </Grid>
+
+    <ui:SnackbarPresenter x:Name="Snackbar" Grid.Row="1" VerticalAlignment="Bottom" Margin="20" />
+  </Grid>
+</ui:FluentWindow>

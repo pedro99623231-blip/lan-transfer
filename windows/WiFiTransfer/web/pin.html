@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LAN Transfer</title>
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--fg:#1d2330;--mut:#6b7280;--acc:#2563eb;--bd:#e3e6eb}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#181b22;--fg:#e8eaee;--mut:#9aa1ad;--acc:#60a5fa;--bd:#2a2f3a}}
+body{margin:0;font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--fg)}
+main{max-width:420px;margin:12vh auto 0;padding:16px;text-align:center}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:24px}
+input{width:100%;box-sizing:border-box;font-size:28px;letter-spacing:8px;text-align:center;padding:12px;border-radius:12px;border:1px solid var(--bd);background:var(--bg);color:var(--fg)}
+button{margin-top:16px;width:100%;background:var(--acc);color:#fff;border:0;border-radius:12px;padding:14px;font-size:16px}
+p{color:var(--mut);font-size:14px}
+</style></head><body><main><div class="card">
+<h2>🔒 {{NAME}}</h2>
+<p>Este aparelho pede um PIN. Ele aparece nas configurações do LAN Transfer do outro aparelho.</p>
+<form onsubmit="location.href='/?t='+encodeURIComponent(document.getElementById('p').value.trim());return false">
+<input id="p" inputmode="numeric" maxlength="6" autocomplete="off" autofocus placeholder="••••••">
+<button>Entrar</button></form>
+<p id="e"></p>
+</div></main>
+<script>if(location.search.includes('t='))document.getElementById('e').textContent='PIN incorreto. Tente de novo.';</script>
+</body></html>

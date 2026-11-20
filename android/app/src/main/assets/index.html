@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LAN Transfer</title>
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--fg:#1d2330;--mut:#6b7280;--acc:#2563eb;--bd:#e3e6eb;--ok:#15803d}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#181b22;--fg:#e8eaee;--mut:#9aa1ad;--acc:#60a5fa;--bd:#2a2f3a;--ok:#4ade80}}
+*{box-sizing:border-box}body{margin:0;font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--fg)}
+main{max-width:720px;margin:0 auto;padding:16px}h1{font-size:1.3rem;margin:.3rem 0 .2rem}h2{font-size:1.05rem;margin:22px 0 8px}
+.sub{color:var(--mut);margin:0 0 16px;font-size:14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:8px 16px;margin-bottom:14px}
+button,.btn{background:var(--acc);color:#fff;border:0;border-radius:12px;padding:12px 16px;font-size:15px;cursor:pointer;display:inline-block}
+button.sec,.btn.sec{background:transparent;color:var(--acc);border:1px solid var(--bd)}button:disabled{opacity:.45}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+input[type=search]{width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--fg);font-size:15px;margin-bottom:12px}
+.row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--bd)}.row:first-child{border-top:0}
+.thumb{width:44px;height:44px;border-radius:8px;object-fit:cover;background:var(--bd);flex:none}
+.ic{width:44px;height:44px;border-radius:8px;background:var(--bd);display:flex;align-items:center;justify-content:center;flex:none;font-size:20px}
+.name{flex:1;min-width:0;word-break:break-all}.mut{color:var(--mut);font-size:13px}
+a.dl{color:var(--acc);text-decoration:none;font-weight:600;font-size:14px;padding:6px 4px}
+input[type=checkbox]{width:22px;height:22px;accent-color:var(--acc);flex:none}
+.empty{padding:28px 4px;text-align:center;color:var(--mut)}
+input[type=file]{display:none}
+.bar{height:6px;border-radius:3px;background:var(--bd);overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--acc);width:0}
+.okc{color:var(--ok)}
+</style></head><body><main>
+<h1>📶 {{NAME}}</h1>
+<p class="sub">Arquivos disponibilizados com o LAN Transfer. Toque para baixar.</p>
+<div class="tools">
+  <button id="all">Baixar tudo (.zip)</button>
+  <button id="zip" class="sec" disabled>Baixar selecionados</button>
+</div>
+<input type="search" id="q" placeholder="Buscar arquivos…">
+<div class="card" id="files"><div class="empty">Carregando…</div></div>
+
+<h2>Enviar para este aparelho</h2>
+<p class="sub">Escolha arquivos do seu celular ou computador. A pessoa do outro lado precisa aceitar o envio.</p>
+<div class="tools">
+  <label class="btn" for="pick">Escolher arquivos</label>
+  <label class="btn sec" for="pickdir">Escolher pasta</label>
+  <input type="file" id="pick" multiple>
+  <input type="file" id="pickdir" webkitdirectory multiple>
+</div>
+<div class="card" id="up" style="display:none"></div>
+<h2>Enviar texto</h2>
+<p class="sub">Um link, endereço ou recado. Aparece na tela do outro aparelho, pronto para copiar.</p>
+<textarea id="txt" rows="3" style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--fg);font:inherit"></textarea>
+<div class="tools" style="margin-top:8px"><button id="sendtxt">Enviar texto</button><span id="txtok" class="mut" style="align-self:center"></span></div>
+</main><script>
+const $=s=>document.querySelector(s);
+const fmt=n=>n<1024?n+' B':n<1048576?(n/1024).toFixed(1)+' KB':n<1073741824?(n/1048576).toFixed(1)+' MB':(n/1073741824).toFixed(2)+' GB';
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+let last='',list=[];
+async function load(){
+  let r;try{r=await fetch('/api/files',{cache:'no-store'});}catch(e){return;}
+  if(r.status===401||r.status===403){location.reload();return;}
+  try{list=await r.json();}catch(e){return;}
+  const sig=JSON.stringify(list);if(sig===last)return;last=sig;render();
+}
+function render(){
+  const box=$('#files');$('#all').disabled=!list.length;
+  const q=$('#q').value.trim().toLowerCase();
+  const shown=list.filter(f=>!q||(f.path+'/'+f.name).toLowerCase().includes(q));
+  if(!shown.length){box.innerHTML=`<div class="empty">${list.length?'Nada encontrado.':'Nenhum arquivo disponível no momento.'}</div>`;upd();return;}
+  const sel=new Set(checks());box.innerHTML='';
+  for(const f of shown){const r=document.createElement('div');r.className='row';
+    const pic=f.thumb?`<img class="thumb" loading="lazy" src="/thumb/${f.id}" onerror="this.outerHTML='<div class=ic>📄</div>'">`:'<div class="ic">📄</div>';
+    r.innerHTML=`<input type="checkbox" value="${f.id}" ${sel.has(f.id)?'checked':''}>${pic}<div class="name">${esc(f.name)}<div class="mut">${fmt(f.size)}${f.path?' · '+esc(f.path):''}</div></div><a class="dl" href="/files/${f.id}" download="${esc(f.name)}">Baixar</a>`;
+    r.querySelector('input').onchange=upd;box.appendChild(r);}
+  upd();
+}
+const checks=()=>[...document.querySelectorAll('#files input:checked')].map(c=>c.value);
+function upd(){const n=checks().length;$('#zip').disabled=!n;$('#zip').textContent=n?`Baixar ${n} selecionado(s)`:'Baixar selecionados';}
+$('#q').oninput=render;
+$('#all').onclick=()=>{location.href='/api/zip';};
+$('#zip').onclick=()=>{const n=checks();location.href=n.length===1?'/files/'+n[0]:'/api/zip?'+n.map(x=>'id='+x).join('&');};
+
+// ---------- envio pelo navegador
+const dirOf=f=>{const p=f.webkitRelativePath||'';const i=p.lastIndexOf('/');return i>0?p.slice(0,i):'';};
+async function send(files){
+  files=[...files];if(!files.length)return;
+  const up=$('#up');up.style.display='block';
+  up.innerHTML=`<div class="row"><div class="name">Aguardando a outra pessoa aceitar ${files.length} arquivo(s)…<div class="mut">${fmt(files.reduce((a,f)=>a+f.size,0))}</div></div></div>`;
+  let token;
+  try{
+    const r=await fetch('/api/offer',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({files:files.map(f=>({name:f.name,size:f.size,path:dirOf(f)}))})});
+    if(!r.ok){up.innerHTML='<div class="empty">O envio foi recusado ou não foi respondido.</div>';return;}
+    token=(await r.json()).token;
+  }catch(e){up.innerHTML='<div class="empty">Não foi possível falar com o aparelho.</div>';return;}
+  up.innerHTML='';
+  const rows=files.map(f=>{const d=document.createElement('div');d.className='row';
+    d.innerHTML=`<div class="name">${esc(f.name)}<div class="mut">${fmt(f.size)}</div><div class="bar"><i></i></div></div>`;up.appendChild(d);return d;});
+  for(let i=0;i<files.length;i++){
+    const f=files[i],row=rows[i],bar=row.querySelector('i'),mut=row.querySelector('.mut');
+    const ok=await new Promise(res=>{const x=new XMLHttpRequest();
+      x.open('POST',`/upload?offer=${token}&name=${encodeURIComponent(f.name)}&path=${encodeURIComponent(dirOf(f))}`);
+      x.upload.onprogress=e=>{if(e.lengthComputable){bar.style.width=(e.loaded*100/e.total)+'%';mut.textContent=`${fmt(e.loaded)} de ${fmt(f.size)}`;}};
+      x.onload=()=>res(x.status===200);x.onerror=()=>res(false);x.send(f);});
+    mut.innerHTML=ok?`<span class="okc">✓ Enviado</span> · ${fmt(f.size)}`:'Falhou';bar.parentNode.remove();
+  }
+}
+$('#pick').onchange=e=>{send(e.target.files);e.target.value='';};
+$('#pickdir').onchange=e=>{send(e.target.files);e.target.value='';};
+$('#sendtxt').onclick=async()=>{const t=$('#txt').value;if(!t.trim())return;
+  try{const r=await fetch('/api/text',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t})});
+    $('#txtok').textContent=r.ok?'✓ Enviado':'Não foi possível enviar';if(r.ok)$('#txt').value='';}catch(e){$('#txtok').textContent='Não foi possível enviar';}};
+load();setInterval(load,4000);
+</script></body></html>
