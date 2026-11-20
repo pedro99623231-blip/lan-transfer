@@ -21,12 +21,12 @@ jobs:
             asset: LANTransfer-5.0.0-linux-x64
           - os: macos-15-intel
             asset: LANTransfer-5.0.0-macos-intel
-          - os: macos-14
+          - os: macos-15
             asset: LANTransfer-5.0.0-macos-apple-silicon
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Build with PyInstaller
@@ -46,7 +46,7 @@ jobs:
           cp dist/lan-transfer "pkg/${{ matrix.asset }}/"
           cp linux-mac/README.md linux-mac/LEIA-ME.md LICENSE "pkg/${{ matrix.asset }}/"
           cd pkg && tar -czf "../${{ matrix.asset }}.tar.gz" "${{ matrix.asset }}"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.asset }}
           path: ${{ matrix.asset }}.tar.gz
