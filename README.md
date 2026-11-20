@@ -1,66 +1,73 @@
 # LAN Transfer
 
-Transfira arquivos, pastas e textos entre PC Windows, celular Android, Linux e Mac que estejam na mesma rede (Wi-Fi ou cabo). Sem nuvem, sem cadastro, sem cabo USB.
+**English** · [Português](README.pt-BR.md)
 
-## Baixar
+Send files, folders and text between Windows PCs, Android phones, Linux and Mac on the same network (Wi-Fi or cable). No cloud, no sign-up, no USB cable.
 
-Pegue a versão mais recente em **[Releases](../../releases/latest)**:
+## Download
 
-| Sistema | Arquivo |
+Get the latest version from **[Releases](../../releases/latest)**:
+
+| System | File |
 |---|---|
-| Windows 10/11 (64 bits) | `LANTransfer-Setup-5.0.0.exe` |
-| Android 10 ou mais novo | `LANTransfer-5.0.0.apk` |
-| Linux e Mac | `lan_transfer.py` (pasta [`linux-mac`](linux-mac)) |
+| Windows 10/11 (64-bit) | `LANTransfer-Setup-5.0.0.exe` |
+| Android 10 or newer | `LANTransfer-5.0.0.apk` |
+| Linux (64-bit) | `LANTransfer-5.0.0-linux-x64.tar.gz` |
+| Mac with Intel | `LANTransfer-5.0.0-macos-intel.tar.gz` |
+| Mac with Apple Silicon | `LANTransfer-5.0.0-macos-apple-silicon.tar.gz` |
 
-No Android, permita "instalar apps desconhecidos" para o navegador ou gerenciador de arquivos na hora de abrir o APK.
+On Android, allow "install unknown apps" for your browser or file manager when opening the APK.
+On Linux and Mac, extract the archive and run `./lan-transfer` in a terminal. See the [Linux/Mac README](linux-mac/README.md), which also explains how to allow the app on macOS.
 
-## O que ele faz
+The app interface is available in Portuguese and English.
 
-- **Encontra os outros aparelhos sozinho** na rede, inclusive quando há mais de um roteador.
-- Cada aparelho **disponibiliza** arquivos e pastas, e os outros veem a lista e baixam o que quiserem. No PC os arquivos são compartilhados no lugar, sem cópia.
-- **Envio direto**: mande arquivos ou textos para outro aparelho, que aceita ou recusa.
-- Velocidade, tempo restante, pausar, cancelar e **retomar downloads interrompidos**.
-- Pastas sincronizadas, miniaturas, pré-visualização e histórico.
-- **PIN opcional** e modo "só aparelhos confiáveis".
-- Conexão **HTTPS** entre os apps, com certificado verificado pela impressão digital anunciada na descoberta.
-- **QR code** para quem não tem o app: abre uma página no navegador para baixar e enviar.
-- Tema claro/escuro e idioma português/inglês.
-- Windows: ícone na bandeja, iniciar com o Windows e "Disponibilizar no LAN Transfer" no botão direito do Explorer.
+## Features
 
-## Estrutura
+- **Finds the other devices automatically** on the network, even with more than one router.
+- Each device **shares** files and folders, and the others see the list and download what they want. On the PC, files are shared in place, without copying.
+- **Direct send**: send files or text to another device, which accepts or declines.
+- Speed, time left, pause, cancel and **resume interrupted downloads**.
+- Synced folders, thumbnails, preview and history.
+- Optional **PIN** and "trusted devices only" mode.
+- **HTTPS** between the apps, with the certificate checked against the fingerprint announced during discovery.
+- **QR code** for people without the app: opens a page in the browser to download and upload.
+- Light/dark theme and Portuguese/English.
+- Windows: tray icon, start with Windows and "Disponibilizar no LAN Transfer" (share) in the Explorer right-click menu.
 
-| Pasta | Conteúdo |
+## Project layout
+
+| Folder | Contents |
 |---|---|
-| [`windows`](windows) | App WPF em C# (.NET 8, WPF-UI, Kestrel, QRCoder) e instalador Inno Setup |
-| [`android`](android) | App em Kotlin com Jetpack Compose (Material 3) e OkHttp |
-| [`linux-mac`](linux-mac) | Script único em Python 3.8+ só com a biblioteca padrão, com interface no navegador |
+| [`windows`](windows) | WPF app in C# (.NET 8, WPF-UI, Kestrel, QRCoder) and Inno Setup installer |
+| [`android`](android) | Kotlin app with Jetpack Compose (Material 3) and OkHttp |
+| [`linux-mac`](linux-mac) | Single Python 3.8+ script using only the standard library, with a browser UI. Executables are built by GitHub Actions |
 
-## Compilar
+## Building
 
-**Windows** (precisa do .NET SDK 8 e do Inno Setup 6):
+**Windows** (needs .NET SDK 8 and Inno Setup 6):
 
 ```powershell
 cd windows
 powershell -ExecutionPolicy Bypass -File build.ps1
 ```
 
-O instalador sai em `windows/output/`.
+The installer ends up in `windows/output/`.
 
-**Android** (precisa do Android SDK e JDK 17):
+**Android** (needs the Android SDK and JDK 17):
 
 ```powershell
 cd android
 powershell -ExecutionPolicy Bypass -File build-apk.ps1
 ```
 
-Ou, em qualquer sistema, `./gradlew assembleRelease` com `sdk.dir` no `local.properties`. O APK sai em `android/output/`. O build de release é assinado com a chave de debug local, para poder ser instalado direto.
+Or, on any system, `./gradlew assembleRelease` with `sdk.dir` set in `local.properties`. The APK ends up in `android/output/`. The release build is signed with the local debug key so it can be installed directly.
 
-**Linux/Mac**: não precisa compilar. Rode `python3 linux-mac/lan_transfer.py`. Veja o [LEIA-ME](linux-mac/LEIA-ME.md).
+**Linux/Mac**: you can run it directly with `python3 linux-mac/lan_transfer.py`. The executables are built by the [`desktop-builds.yml`](.github/workflows/desktop-builds.yml) workflow with PyInstaller.
 
-## Rede e firewall
+## Network and firewall
 
-Os apps usam a porta **UDP 48555** para se encontrarem e **TCP 8000 a 8019** (HTTP) e a mesma faixa +100 (HTTPS) para as transferências. O instalador do Windows libera isso no firewall. No Linux com `ufw`, libere essas portas manualmente.
+The apps use **UDP port 48555** to find each other and **TCP 8000 to 8019** (HTTP) plus the same range +100 (HTTPS) for transfers. The Windows installer opens these in the firewall. On Linux with `ufw`, allow these ports manually.
 
-## Licença
+## License
 
 [MIT](LICENSE)

@@ -1,0 +1,52 @@
+name: Linux and macOS builds
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["linux-mac/**", ".github/workflows/desktop-builds.yml"]
+  pull_request:
+    paths: ["linux-mac/**", ".github/workflows/desktop-builds.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            asset: LANTransfer-5.0.0-linux-x64
+          - os: macos-15-intel
+            asset: LANTransfer-5.0.0-macos-intel
+          - os: macos-14
+            asset: LANTransfer-5.0.0-macos-apple-silicon
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build with PyInstaller
+        run: |
+          python -m pip install --upgrade pip pyinstaller==6.11.1
+          pyinstaller --onefile --name lan-transfer linux-mac/lan_transfer.py
+      - name: Smoke test
+        run: |
+          ./dist/lan-transfer --no-browser &
+          PID=$!
+          sleep 8
+          curl -sf http://127.0.0.1:8000/api/ping
+          kill $PID || true
+      - name: Package
+        run: |
+          mkdir -p "pkg/${{ matrix.asset }}"
+          cp dist/lan-transfer "pkg/${{ matrix.asset }}/"
+          cp linux-mac/README.md linux-mac/LEIA-ME.md LICENSE "pkg/${{ matrix.asset }}/"
+          cd pkg && tar -czf "../${{ matrix.asset }}.tar.gz" "${{ matrix.asset }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: ${{ matrix.asset }}.tar.gz

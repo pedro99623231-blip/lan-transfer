@@ -1,8 +1,32 @@
 # LAN Transfer para Linux e Mac
 
-Um único arquivo, `lan_transfer.py`, que só precisa do Python 3.8 ou mais novo (já vem no Mac e na maioria dos Linux). Não instala nada.
+[English](README.md)
 
-## Como usar
+## Versão pronta (recomendado)
+
+Baixe o arquivo do seu sistema na página de [Releases](https://github.com/pedro99623231-blip/lan-transfer/releases/latest):
+
+| Sistema | Arquivo |
+|---|---|
+| Linux (64 bits) | `LANTransfer-5.0.0-linux-x64.tar.gz` |
+| Mac com Intel | `LANTransfer-5.0.0-macos-intel.tar.gz` |
+| Mac com Apple Silicon (M1 em diante) | `LANTransfer-5.0.0-macos-apple-silicon.tar.gz` |
+
+Extraia e rode no terminal:
+
+```
+./lan-transfer
+```
+
+**Mac:** o app não é assinado pela Apple, então na primeira vez o macOS bloqueia. Rode uma vez, na pasta extraída:
+
+```
+xattr -d com.apple.quarantine lan-transfer
+```
+
+## Rodando pelo código-fonte
+
+Um único arquivo, `lan_transfer.py`, que só precisa do Python 3.8 ou mais novo (já vem no Mac e na maioria dos Linux). Não instala nada.
 
 ```
 python3 lan_transfer.py                 # disponibiliza a pasta ~/LAN Transfer/Compartilhar
